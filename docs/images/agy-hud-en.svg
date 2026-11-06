@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 280" width="980" height="280">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1b26"/>
+      <stop offset="100%" stop-color="#13141c"/>
+    </linearGradient>
+    <filter id="shadow" x="-2%" y="-4%" width="104%" height="112%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Window Frame -->
+  <rect x="10" y="10" width="960" height="260" rx="12" fill="url(#bg)" stroke="#2f334d" stroke-width="1.5" filter="url(#shadow)"/>
+
+  <!-- Title Bar -->
+  <path d="M 10 22 Q 10 10 22 10 L 958 10 Q 970 10 970 22 L 970 44 L 10 44 Z" fill="#1f2335"/>
+  <line x1="10" y1="44" x2="970" y2="44" stroke="#2f334d" stroke-width="1"/>
+  <circle cx="32" cy="27" r="6" fill="#ff5f56"/>
+  <circle cx="52" cy="27" r="6" fill="#ffbd2e"/>
+  <circle cx="72" cy="27" r="6" fill="#27c93f"/>
+  <text x="490" y="32" fill="#7aa2f7" font-family="Consolas, 'JetBrains Mono', monospace" font-size="13" text-anchor="middle" font-weight="bold">agy — Google Antigravity CLI (agy-hud)</text>
+
+  <!-- Prompt Input Box -->
+  <rect x="28" y="60" width="924" height="44" rx="6" fill="#16161e" stroke="#3b4261" stroke-width="1"/>
+  <text x="44" y="87" fill="#7dcfff" font-family="Consolas, 'JetBrains Mono', monospace" font-size="15" font-weight="bold">&gt;</text>
+  <text x="64" y="87" fill="#c0caf5" font-family="Consolas, 'JetBrains Mono', monospace" font-size="14">Refactor the authentication middleware and run unit tests</text>
+  <rect x="528" y="73" width="8" height="18" fill="#7aa2f7" opacity="0.85"/>
+
+  <!-- Divider -->
+  <line x1="28" y1="120" x2="952" y2="120" stroke="#292e42" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- HUD Line 1: Model, Plan, Context & Tokens -->
+  <text x="32" y="152" font-family="Consolas, 'JetBrains Mono', 'Segoe UI Emoji', monospace" font-size="14">
+    <tspan fill="#ffffff">🤖 </tspan>
+    <tspan fill="#4796e3" font-weight="bold">Gemini 4 Argon (Medium)</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">💎 </tspan>
+    <tspan fill="#ffffff" font-weight="bold">Google AI Pro</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">Context Used: </tspan>
+    <tspan fill="#57caff" font-weight="bold">18.5%</tspan>
+    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">██</tspan><tspan fill="#565f89">░░░░░░░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">💰 </tspan>
+    <tspan fill="#57caff">185.0k</tspan>
+    <tspan fill="#c0caf5"> / 1.0M</tspan>
+  </text>
+
+  <!-- HUD Line 2: 5-hr Quota, Reset, Argon Quota, Weekly Quota -->
+  <text x="32" y="188" font-family="Consolas, 'JetBrains Mono', 'Segoe UI Emoji', monospace" font-size="14">
+    <tspan fill="#ffffff">5-hr Available: </tspan>
+    <tspan fill="#57caff" font-weight="bold">88%</tspan>
+    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">████████</tspan><tspan fill="#565f89">░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">⏳ </tspan>
+    <tspan fill="#57caff" font-weight="bold">4h 50m</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">Argon Available: </tspan>
+    <tspan fill="#5cdb6d" font-weight="bold">62%</tspan>
+    <tspan fill="#ffffff"> [</tspan><tspan fill="#5cdb6d">██████</tspan><tspan fill="#565f89">░░░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">7-day Available: </tspan>
+    <tspan fill="#57caff" font-weight="bold">78%</tspan>
+    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">███████</tspan><tspan fill="#565f89">░░░</tspan><tspan fill="#ffffff">]</tspan>
+  </text>
+
+  <!-- HUD Line 3: Workspace, Git, Agent State, Subagents, BG Tasks -->
+  <text x="32" y="224" font-family="Consolas, 'JetBrains Mono', 'Segoe UI Emoji', monospace" font-size="14">
+    <tspan fill="#ffffff">📁 </tspan>
+    <tspan fill="#ffffff" font-weight="bold">aiplatform</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">🔀 </tspan>
+    <tspan fill="#ffffff" font-weight="bold">main</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">🔍 </tspan>
+    <tspan fill="#5cdb6d" font-weight="bold">no changes</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">Agent: </tspan>
+    <tspan fill="#ffd427" font-weight="bold">thinking</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">Subagents: </tspan>
+    <tspan fill="#5cdb6d" font-weight="bold">2</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">BG: </tspan>
+    <tspan fill="#57caff" font-weight="bold">0</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">Queue: </tspan>
+    <tspan fill="#57caff" font-weight="bold">0</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">Awaiting You: </tspan>
+    <tspan fill="#5cdb6d" font-weight="bold">none</tspan>
+  </text>
+</svg>

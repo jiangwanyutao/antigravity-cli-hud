@@ -1,0 +1,9 @@
+{
+  "name": "antigravity-cli-hud",
+  "version": "1.0.0",
+  "description": "Claude-HUD style multi-line statusline plugin for Google Antigravity CLI (agy) — real-time model, context window bar, 5h/weekly/Argon quota bars, Git status, and agent/subagent telemetry.",
+  "author": "jiangwanyutao",
+  "license": "MIT",
+  "homepage": "https://github.com/jiangwanyutao/antigravity-cli-hud",
+  "repository": "https://github.com/jiangwanyutao/antigravity-cli-hud"
+}

@@ -1,0 +1,596 @@
+import { spawnSync, execSync } from 'child_process';
+import { writeFileSync, mkdirSync, readFileSync, unlinkSync } from 'fs';
+import path, { dirname, join } from 'path';
+import http from 'http';
+import https from 'https';
+import os from 'os';
+import { pathToFileURL, fileURLToPath } from 'url';
+
+const CACHE_FILE = join(os.homedir(), '.gemini', 'tmp', 'real_quota_cache.json');
+const ENV_CACHE_FILE = join(os.homedir(), '.gemini', 'tmp', 'antigravity_ls_env.json');
+
+export function formatResetTime(resetTimeStr) {
+  try {
+    if (!resetTimeStr || typeof resetTimeStr === 'boolean' || Array.isArray(resetTimeStr)) return '';
+    const reset = new Date(resetTimeStr);
+    const resetMs = reset.getTime();
+    if (isNaN(resetMs)) return '';
+    const diffSeconds = Math.floor((resetMs - Date.now()) / 1000);
+    if (diffSeconds <= 0) return 'now';
+    const minutes = Math.floor((diffSeconds + 59) / 60);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours >= 24) {
+      const days = Math.floor(hours / 24);
+      const remHours = hours % 24;
+      return remHours ? `${days}d ${remHours}h` : `${days}d`;
+    }
+    return mins ? `${hours}h ${mins}m` : `${hours}h`;
+  } catch (e) {
+    return '';
+  }
+}
+
+function findServerCandidates() {
+  try {
+    let output = '';
+    const candidates = [];
+    if (process.platform === 'win32') {
+      try {
+        const psCmd = "powershell.exe -NoProfile -Command \"Get-CimInstance Win32_Process -Filter 'Name like ''%antigravity%'' or Name like ''%agy%'' or Name like ''%language_server%''' | Select-Object ProcessID, Name, CommandLine | ConvertTo-Json -Compress\"";
+        output = execSync(psCmd, { encoding: 'utf8', windowsHide: true }).trim();
+        if (output) {
+          const jsonStart = output.search(/\[|\{/);
+          if (jsonStart !== -1) {
+            output = output.slice(jsonStart);
+          }
+          let processes = JSON.parse(output);
+          if (!Array.isArray(processes)) processes = [processes];
+          for (const proc of processes) {
+            const cmdLine = proc.CommandLine || '';
+            const pid = proc.ProcessId || proc.ProcessID;
+            if (!pid) continue;
+            
+            const lower = (cmdLine + ' ' + (proc.Name || '')).toLowerCase();
+            const isCli = (lower.includes('antigravity') || lower.includes('agy')) && !lower.includes('statusline-quota');
+            const isLang = lower.includes('language_server');
+            if (!isCli && !isLang) continue;
+            
+            const fallbackToken = process.env.ANTIGRAVITY_CSRF_TOKEN || '';
+            const matchToken = cmdLine.match(/--csrf_token\s+([^\s"']+)/) || cmdLine.match(/--csrf_token=([^\s"']+)/);
+            const token = matchToken ? matchToken[1] : fallbackToken;
+            candidates.push({
+              pid: pid,
+              csrf_token: token,
+              score: (isCli ? 40 : 0) + (isLang ? 20 : 0) + (token ? 10 : 0),
+              kind: isCli ? 'cli' : 'language_server'
+            });
+          }
+        }
+      } catch (e) {}
+
+      if (candidates.length === 0) {
+        try {
+          const wmicOut = execSync('wmic process get processid,caption,commandline /format:csv', { encoding: 'utf8', windowsHide: true });
+          const lines = wmicOut.split('\n');
+          for (const line of lines) {
+            const lower = line.toLowerCase();
+            if (!lower.includes('language_server') && !lower.includes('agy') && !lower.includes('antigravity')) continue;
+            if (lower.includes('statusline-quota')) continue;
+            const parts = line.split(',');
+            if (parts.length >= 3) {
+              const pidStr = parts[parts.length - 1].trim();
+              const pid = parseInt(pidStr, 10);
+              if (!isNaN(pid)) {
+                const fallbackToken = process.env.ANTIGRAVITY_CSRF_TOKEN || '';
+                const matchToken = line.match(/--csrf_token\s+([^\s"']+)/) || line.match(/--csrf_token=([^\s"']+)/);
+                const token = matchToken ? matchToken[1] : fallbackToken;
+                candidates.push({
+                  pid: pid,
+                  csrf_token: token,
+                  score: 20 + (token ? 10 : 0),
+                  kind: 'language_server'
+                });
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    } else {
+      try {
+        output = execSync('ps auxww', { encoding: 'utf8', windowsHide: true });
+        const lines = output.split('\n');
+        for (const line of lines) {
+          const lower = line.toLowerCase();
+          const isCli = (/\bagy(\s|$)/.test(lower) || lower.includes('antigravity-cli')) && !lower.includes('statusline-quota');
+          const isLang = lower.includes('language_server');
+          if (!isCli && !isLang) continue;
+          const parts = line.trim().split(/\s+/);
+          if (parts.length < 11) continue;
+          const pid = parseInt(parts[1], 10);
+          if (isNaN(pid)) continue;
+          
+          const fallbackToken = process.env.ANTIGRAVITY_CSRF_TOKEN || '';
+          const matchToken = line.match(/--csrf_token(?:=|\s+)([^\s"']+)/);
+          const token = matchToken ? matchToken[1] : fallbackToken;
+          candidates.push({
+            pid,
+            csrf_token: token,
+            score: (isCli ? 40 : 0) + (isLang ? 20 : 0) + (token ? 10 : 0) - (lower.includes('/applications/antigravity.app') ? 10 : 0),
+            kind: isCli ? 'cli' : 'language_server'
+          });
+        }
+      } catch (e) {}
+    }
+    return candidates.sort((a, b) => b.score - a.score);
+  } catch (e) {
+    return [];
+  }
+}
+
+function getListeningPorts(pid) {
+  const ports = [];
+  try {
+    if (process.platform === 'win32') {
+      const output = execSync(`netstat -ano | findstr ${pid}`, { encoding: 'utf8', windowsHide: true });
+      const matches = [...output.matchAll(/TCP\s+(?:127\.0\.0\.1|0\.0\.0\.0):(\d+).*?LISTENING/g)];
+      for (const m of matches) {
+        const port = parseInt(m[1], 10);
+        if (!ports.includes(port)) ports.push(port);
+      }
+    } else {
+      const output = execSync(`lsof -nP -a -p ${pid} -iTCP -sTCP:LISTEN`, { encoding: 'utf8', windowsHide: true });
+      const matches = [...output.matchAll(/:(\d+)\s+\(LISTEN\)/g)];
+      for (const m of matches) {
+        const port = parseInt(m[1], 10);
+        if (!ports.includes(port)) ports.push(port);
+      }
+    }
+  } catch (e) {}
+  return ports.sort((a, b) => a - b);
+}
+
+function requestRpc(host, port, csrfToken, rpcPath, useHttps = false) {
+  return new Promise((resolve, reject) => {
+    const client = useHttps ? https : http;
+    const postData = JSON.stringify({
+      metadata: { ideName: 'antigravity', extensionName: 'antigravity', locale: 'en' }
+    });
+
+    const options = {
+      hostname: host || '127.0.0.1',
+      port: port,
+      path: rpcPath,
+      method: 'POST',
+      rejectUnauthorized: false,
+      timeout: 2000,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Connect-Protocol-Version': '1',
+        'X-Codeium-Csrf-Token': csrfToken || '',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = client.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            resolve(JSON.parse(data));
+          } catch(e) { reject(e); }
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}`));
+        }
+      });
+    });
+    req.on('error', (e) => reject(e));
+    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    req.write(postData);
+    req.end();
+  });
+}
+
+function requestService(host, port, csrfToken, rpcPath, preferHttps = true) {
+  return requestRpc(host, port, csrfToken, rpcPath, preferHttps).catch((err) => {
+    if (err.message && err.message.startsWith('HTTP ')) {
+      throw err;
+    }
+    return requestRpc(host, port, csrfToken, rpcPath, !preferHttps);
+  });
+}
+
+export function requestUserStatus(port, csrfToken, host = '127.0.0.1', preferHttps = true) {
+  return requestService(host, port, csrfToken, '/exa.language_server_pb.LanguageServerService/GetUserStatus', preferHttps);
+}
+
+export function requestQuotaSummary(port, csrfToken, host = '127.0.0.1', preferHttps = true) {
+  return requestService(host, port, csrfToken, '/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary', preferHttps);
+}
+
+export function parseWeeklyBuckets(summaryResponse) {
+  const weekly = {};
+  if (!summaryResponse) return weekly;
+  const resObj = summaryResponse.response || summaryResponse;
+  if (!resObj.groups) return weekly;
+  for (const group of resObj.groups) {
+    if (!group.buckets) continue;
+    for (const bucket of group.buckets) {
+      const windowVal = (bucket.window || bucket.windowVal || '').toLowerCase();
+      const bucketId = bucket.bucketId || '';
+      if (!bucketId) continue;
+      const lowerId = bucketId.toLowerCase();
+      const isShortTermSuffix = /-(5h|3h|hourly|shortterm)$/i.test(bucketId);
+      const isWeekly = windowVal === 'weekly' || (!windowVal && (lowerId.endsWith('-weekly') || ((lowerId.includes('argon') || lowerId.endsWith('-wtu')) && !isShortTermSuffix)));
+      if (!isWeekly) continue;
+      const pool = bucketId.replace(/-weekly$/, '');
+
+      let fraction = 1;
+      const remainingField = bucket.remainingFraction !== undefined ? bucket.remainingFraction : bucket.remaining;
+      if (remainingField !== undefined && remainingField !== null) {
+        fraction = parseFloat(remainingField);
+      } else if (bucket.resetTime || bucket.reset) {
+        fraction = 0;
+      }
+
+      const remainingNum = fraction > 1 ? fraction : fraction * 100;
+      const remaining = Math.max(0, Math.min(100, remainingNum));
+
+      const entry = {
+        remaining_percentage: remaining,
+        window: 'weekly'
+      };
+
+      const resetTime = bucket.resetTime || bucket.reset;
+      if (resetTime) {
+        entry.reset_time = resetTime;
+        entry.refreshes_in = formatResetTime(resetTime);
+      }
+
+      if (!weekly[pool] || entry.remaining_percentage < weekly[pool].remaining_percentage) {
+        weekly[pool] = entry;
+      }
+    }
+  }
+  return weekly;
+}
+
+export function parseShortTermBuckets(summaryResponse) {
+  const shortTerm = {};
+  if (!summaryResponse) return shortTerm;
+  const resObj = summaryResponse.response || summaryResponse;
+  if (!resObj.groups) return shortTerm;
+  for (const group of resObj.groups) {
+    if (!group.buckets) continue;
+    for (const bucket of group.buckets) {
+      const windowVal = (bucket.window || bucket.windowVal || '').toLowerCase();
+      const bucketId = bucket.bucketId || '';
+      if (!bucketId) continue;
+      const lowerId = bucketId.toLowerCase();
+      const isShortTermSuffix = /-(5h|3h|hourly|shortterm)$/i.test(bucketId);
+      const isWeekly = windowVal === 'weekly' || (!windowVal && (lowerId.endsWith('-weekly') || ((lowerId.includes('argon') || lowerId.endsWith('-wtu')) && !isShortTermSuffix)));
+      if (isWeekly) continue;
+      const pool = bucketId.replace(/-(5h|3h|hourly|shortterm)$/, '');
+
+      let fraction = 1;
+      const remainingField = bucket.remainingFraction !== undefined ? bucket.remainingFraction : bucket.remaining;
+      if (remainingField !== undefined && remainingField !== null) {
+        fraction = parseFloat(remainingField);
+      } else if (bucket.resetTime || bucket.reset) {
+        fraction = 0;
+      }
+
+      const remainingNum = fraction > 1 ? fraction : fraction * 100;
+      const remaining = Math.max(0, Math.min(100, remainingNum));
+
+      const entry = {
+        remaining_percentage: remaining
+      };
+
+      const resetTime = bucket.resetTime || bucket.reset;
+      if (resetTime) {
+        entry.reset_time = resetTime;
+        entry.refreshes_in = formatResetTime(resetTime);
+      }
+
+      if (!shortTerm[pool] || entry.remaining_percentage < shortTerm[pool].remaining_percentage) {
+        shortTerm[pool] = entry;
+      }
+    }
+  }
+  return shortTerm;
+}
+
+export async function fetchLiveQuotaCache() {
+  const allModels = {};
+  const weekly = {};
+  const shortTerm = {};
+  let accountEmail = '';
+  let planTierName = '';
+  let planStatusData = {};
+
+  const processStatusAndSummary = (response, summaryResponse) => {
+    const userStatus = response?.userStatus || {};
+    if (userStatus.email) accountEmail = userStatus.email;
+    if (userStatus.userTier?.name) planTierName = userStatus.userTier.name;
+    if (userStatus.planStatus) planStatusData = userStatus.planStatus;
+
+    const cascade = userStatus.cascadeModelConfigData || {};
+    for (const model of cascade.clientModelConfigs || []) {
+      const quotaInfo = model.quotaInfo;
+      if (!quotaInfo) continue;
+
+      let fraction = 1;
+      if (quotaInfo.remainingFraction !== undefined) {
+        fraction = parseFloat(quotaInfo.remainingFraction);
+      } else if (quotaInfo.resetTime) {
+        fraction = 0;
+      } else {
+        continue;
+      }
+
+      const label = model.label || (model.modelOrAlias && model.modelOrAlias.model) || 'Unknown';
+      const remainingNum = fraction > 1 ? fraction : fraction * 100;
+      const remaining = Math.max(0, Math.min(100, remainingNum));
+      const entry = {
+        name: label,
+        remaining_percentage: remaining,
+      };
+      if (quotaInfo.resetTime) {
+        entry.reset_time = quotaInfo.resetTime;
+        entry.refreshes_in = formatResetTime(quotaInfo.resetTime);
+      }
+      const normKey = label.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      if (!allModels[normKey] || entry.remaining_percentage < allModels[normKey].remaining_percentage) {
+        allModels[normKey] = entry;
+      }
+    }
+
+    if (summaryResponse) {
+      const weeklyBuckets = parseWeeklyBuckets(summaryResponse);
+      for (const pool of Object.keys(weeklyBuckets)) {
+        if (!weekly[pool] || weeklyBuckets[pool].remaining_percentage < weekly[pool].remaining_percentage) {
+          weekly[pool] = weeklyBuckets[pool];
+        }
+      }
+      const shortTermBuckets = parseShortTermBuckets(summaryResponse);
+      for (const pool of Object.keys(shortTermBuckets)) {
+        if (!shortTerm[pool] || shortTermBuckets[pool].remaining_percentage < shortTerm[pool].remaining_percentage) {
+          shortTerm[pool] = shortTermBuckets[pool];
+        }
+      }
+    }
+  };
+
+  let envLsAddr = process.env.ANTIGRAVITY_LS_ADDRESS;
+  let envCsrfToken = process.env.ANTIGRAVITY_CSRF_TOKEN || '';
+  let envPreferHttps = false;
+  let envLoadedFromDisk = false;
+
+  if (!envLsAddr || !envCsrfToken) {
+    try {
+      const savedEnv = JSON.parse(readFileSync(ENV_CACHE_FILE, 'utf8'));
+      if (!envLsAddr && savedEnv.ls_address) {
+        envLsAddr = savedEnv.ls_address;
+        envLoadedFromDisk = true;
+      }
+      if (!envCsrfToken && savedEnv.csrf_token) envCsrfToken = savedEnv.csrf_token;
+      if (savedEnv.prefer_https !== undefined) envPreferHttps = Boolean(savedEnv.prefer_https);
+    } catch (_) {}
+  } else {
+    try {
+      mkdirSync(dirname(ENV_CACHE_FILE), { recursive: true });
+      writeFileSyncAndVerifyNoBOM(ENV_CACHE_FILE, JSON.stringify({
+        ls_address: envLsAddr,
+        csrf_token: envCsrfToken,
+        prefer_https: false,
+        updatedAt: Date.now()
+      }, null, 2));
+    } catch (_) {}
+  }
+
+  if (envLsAddr) {
+    try {
+      const [host, portStr] = envLsAddr.split(':');
+      const port = parseInt(portStr, 10);
+      if (!isNaN(port)) {
+        const [response, summaryResponse] = await Promise.all([
+          requestUserStatus(port, envCsrfToken, host, envPreferHttps),
+          requestQuotaSummary(port, envCsrfToken, host, envPreferHttps).catch(() => null)
+        ]);
+        processStatusAndSummary(response, summaryResponse);
+      }
+    } catch (_) {
+      if (envLoadedFromDisk) {
+        envCsrfToken = process.env.ANTIGRAVITY_CSRF_TOKEN || '';
+        try { unlinkSync(ENV_CACHE_FILE); } catch (_) {}
+      }
+    }
+  }
+
+  if (Object.keys(allModels).length === 0 && Object.keys(weekly).length === 0 && Object.keys(shortTerm).length === 0) {
+    const candidates = findServerCandidates();
+    let discoveredEnv = null;
+    for (const info of candidates) {
+      const ports = getListeningPorts(info.pid);
+      for (const port of ports) {
+        try {
+          const token = info.csrf_token || envCsrfToken;
+          const [response, summaryResponse] = await Promise.all([
+            requestUserStatus(port, token, '127.0.0.1', true),
+            requestQuotaSummary(port, token, '127.0.0.1', true).catch(() => null)
+          ]);
+          processStatusAndSummary(response, summaryResponse);
+          if (!discoveredEnv && token && (Object.keys(allModels).length > 0 || Object.keys(weekly).length > 0 || Object.keys(shortTerm).length > 0)) {
+            discoveredEnv = { ls_address: `127.0.0.1:${port}`, csrf_token: token, prefer_https: true };
+          }
+        } catch (_) {
+          continue;
+        }
+      }
+    }
+    if (discoveredEnv && !envLoadedFromDisk) {
+      try {
+        mkdirSync(dirname(ENV_CACHE_FILE), { recursive: true });
+        writeFileSyncAndVerifyNoBOM(ENV_CACHE_FILE, JSON.stringify({
+          ...discoveredEnv,
+          updatedAt: Date.now()
+        }, null, 2));
+      } catch (_) {}
+    }
+  }
+
+  if (Object.keys(allModels).length > 0 || Object.keys(weekly).length > 0 || Object.keys(shortTerm).length > 0) {
+    const now = Date.now();
+    return { 
+      models: allModels, 
+      weekly,
+      shortTerm,
+      updatedAt: now,
+      lsUpdatedAt: now,
+      email: accountEmail,
+      planTier: planTierName,
+      planStatus: planStatusData
+    };
+  }
+  return null;
+}
+
+function writeFileSyncAndVerifyNoBOM(filePath, content) {
+  writeFileSync(filePath, content, { encoding: 'utf8' });
+  let buffer = readFileSync(filePath);
+  if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+    buffer = buffer.slice(3);
+    writeFileSync(filePath, buffer);
+  }
+}
+
+export function mergeQuotaBuckets(baseBuckets = {}, incomingBuckets = {}, preferLowerWhenSameReset = true) {
+  const safeBase = (baseBuckets && typeof baseBuckets === 'object' && !Array.isArray(baseBuckets)) ? baseBuckets : {};
+  const safeIncoming = (incomingBuckets && typeof incomingBuckets === 'object' && !Array.isArray(incomingBuckets)) ? incomingBuckets : {};
+  const merged = { ...safeBase };
+  const now = Date.now();
+
+  for (const [pool, inc] of Object.entries(safeIncoming)) {
+    if (!inc || typeof inc !== 'object') continue;
+    const existing = merged[pool];
+    const existResetMs = existing?.reset_time ? new Date(existing.reset_time).getTime() : 0;
+    const incResetMs = inc.reset_time ? new Date(inc.reset_time).getTime() : 0;
+    const lowerPool = pool.toLowerCase();
+    const isWeekly = lowerPool.includes('weekly') || lowerPool.includes('argon') || lowerPool.endsWith('-wtu') ||
+      existing?.window === 'weekly' || inc?.window === 'weekly' ||
+      Math.max(existResetMs - now, incResetMs - now) > 12 * 60 * 60 * 1000;
+
+    if (!existing || typeof existing !== 'object') {
+      const dynamicInc = inc.reset_time ? formatResetTime(inc.reset_time) : '';
+      merged[pool] = dynamicInc ? { ...inc, refreshes_in: dynamicInc } : inc;
+      if (isWeekly) merged[pool].window = 'weekly';
+      continue;
+    }
+
+    const hasValidExistReset = existResetMs > 0 && !isNaN(existResetMs);
+    const hasValidIncReset = incResetMs > 0 && !isNaN(incResetMs);
+
+    if (hasValidExistReset && existResetMs <= now && (incResetMs > existResetMs || (!hasValidIncReset && inc.remaining_percentage >= 100))) {
+      const dynamicInc = inc.reset_time ? formatResetTime(inc.reset_time) : '';
+      merged[pool] = dynamicInc ? { ...inc, refreshes_in: dynamicInc } : inc;
+      if (isWeekly) merged[pool].window = 'weekly';
+      continue;
+    }
+    if (hasValidIncReset && incResetMs <= now && hasValidExistReset && existResetMs > now) {
+      const dynamicExist = existing.reset_time ? formatResetTime(existing.reset_time) : '';
+      merged[pool] = dynamicExist ? { ...existing, refreshes_in: dynamicExist } : existing;
+      if (isWeekly) merged[pool].window = 'weekly';
+      continue;
+    }
+
+    const windowThresholdMs = isWeekly ? 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
+
+    if (hasValidExistReset && hasValidIncReset && Math.abs(incResetMs - existResetMs) > windowThresholdMs) {
+      const chosen = incResetMs > existResetMs ? inc : existing;
+      const dynamicChosen = chosen.reset_time ? formatResetTime(chosen.reset_time) : '';
+      merged[pool] = dynamicChosen ? { ...chosen, refreshes_in: dynamicChosen } : chosen;
+      if (isWeekly) merged[pool].window = 'weekly';
+      continue;
+    }
+
+    if (!preferLowerWhenSameReset) {
+      const dynamicInc = inc.reset_time ? formatResetTime(inc.reset_time) : '';
+      merged[pool] = dynamicInc ? { ...inc, refreshes_in: dynamicInc } : inc;
+      if (isWeekly) merged[pool].window = 'weekly';
+      continue;
+    }
+
+    const hasExistPct = typeof existing.remaining_percentage === 'number' && !isNaN(existing.remaining_percentage);
+    const hasIncPct = typeof inc.remaining_percentage === 'number' && !isNaN(inc.remaining_percentage);
+    if (hasExistPct && hasIncPct) {
+      const lowerEntry = existing.remaining_percentage <= inc.remaining_percentage ? existing : inc;
+      const higherEntry = existing.remaining_percentage <= inc.remaining_percentage ? inc : existing;
+      const targetResetTime = lowerEntry.reset_time || higherEntry.reset_time;
+      let dynamicRefreshesIn = '';
+      if (targetResetTime) {
+        dynamicRefreshesIn = formatResetTime(targetResetTime);
+      }
+      merged[pool] = {
+        ...higherEntry,
+        ...lowerEntry,
+        remaining_percentage: Math.min(existing.remaining_percentage, inc.remaining_percentage),
+        reset_time: targetResetTime,
+        refreshes_in: dynamicRefreshesIn || inc.refreshes_in || lowerEntry.refreshes_in || higherEntry.refreshes_in
+      };
+      if (isWeekly) merged[pool].window = 'weekly';
+    } else if (hasIncPct) {
+      const dynamicInc = inc.reset_time ? formatResetTime(inc.reset_time) : '';
+      merged[pool] = dynamicInc ? { ...inc, refreshes_in: dynamicInc } : inc;
+      if (isWeekly) merged[pool].window = 'weekly';
+    } else {
+      const dynamicExist = existing.reset_time ? formatResetTime(existing.reset_time) : '';
+      merged[pool] = dynamicExist ? { ...existing, refreshes_in: dynamicExist } : existing;
+      if (isWeekly) merged[pool].window = 'weekly';
+    }
+  }
+  return merged;
+}
+
+async function main() {
+  try {
+    const cache = await fetchLiveQuotaCache();
+    if (cache) {
+      try {
+        const prev = JSON.parse(readFileSync(CACHE_FILE, 'utf8').replace(/^\uFEFF/, ''));
+        if (prev && typeof prev === 'object') {
+          if (prev.lastAgentState !== undefined) cache.lastAgentState = prev.lastAgentState;
+          if (prev.lastOutputTokens !== undefined) cache.lastOutputTokens = prev.lastOutputTokens;
+          if (prev.lastTotalTokens !== undefined) cache.lastTotalTokens = prev.lastTotalTokens;
+          if (prev.lastPollAttemptAt !== undefined) cache.lastPollAttemptAt = prev.lastPollAttemptAt;
+          cache.shortTerm = mergeQuotaBuckets(prev.shortTerm, cache.shortTerm, true);
+          cache.weekly = mergeQuotaBuckets(prev.weekly, cache.weekly, true);
+          cache.models = { ...(prev.models || {}), ...(cache.models || {}) };
+          if (!cache.email && prev.email) cache.email = prev.email;
+          if (!cache.planTier && prev.planTier) cache.planTier = prev.planTier;
+          if (!cache.planStatus && prev.planStatus) cache.planStatus = prev.planStatus;
+        }
+      } catch (_) {}
+      mkdirSync(dirname(CACHE_FILE), { recursive: true });
+      writeFileSyncAndVerifyNoBOM(CACHE_FILE, JSON.stringify(cache, null, 2));
+    }
+  } catch (e) {}
+}
+
+function isDirectExecution() {
+  if (!process.argv[1]) return false;
+  try {
+    const scriptPath = process.argv[1];
+    const metaPath = fileURLToPath(import.meta.url);
+    return path.resolve(scriptPath).toLowerCase() === path.resolve(metaPath).toLowerCase();
+  } catch (e) {
+    return false;
+  }
+}
+
+if (isDirectExecution()) {
+  main();
+}
