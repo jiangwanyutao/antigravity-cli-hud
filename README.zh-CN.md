@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](plugin.json)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](plugin.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
 
@@ -24,8 +24,10 @@
 
 ## ✨ 核心特性
 
-- **开箱即用的 `claude-hud` 三行布局**：
-  - **第 1 行 — 模型与上下文窗口**：当前模型名称（带模型家族专属品牌色）、订阅套餐等级、上下文占用百分比 + 10 格彩色进度条、实时 Token 用量。
+- **原生深度复刻 `jarrodwatts/claude-hud` 终端美学**：
+  - **第 1 行 — 模型、完整路径、上下文与输出速率**：中括号专属品牌模型 `[Gemini 3.8 Flash]`、工作区完整路径与 Zsh 风格 Git 分支 `git:(main*)`、一体化上下文进度条 `Context [░░░░░░░░░░] 6.2% (65.0k/1.0M)`、实时 Token 生成速度 `⚡ 72.0 t/s`。
+  - **第 2 行 — 多维实时配额池与倒计时**：5 小时滚动配额 `5h可用 [█████████░] 96% (4h 20m)`、**Gemini 4 Argon** 专属配额进度条、7 日周配额进度条。
+  - **第 3 行 — 会话工具动态追踪与代理状态**：状态指示灯 `● 闲置`、实时解析 Tail 会话日志的工具调用频次 `✓ run_command ×8 │ ✓ read_file ×5`、子代理与后台任务计数。
   - **第 2 行 — 多维实时配额池**：5 小时滚动配额百分比 + 进度条 + 重置倒计时、**Gemini 4 Argon** 专属配额进度条、7 日周配额进度条。
   - **第 3 行 — 工作区、Git 与代理状态**：当前项目目录名、Git 分支与未提交变更状态、Agent 实时状态（闲置 / 思考中 / 执行中 / 调用工具）、活跃子代理数、后台任务数、输入队列与工具待确认提醒。
 - **24-Bit 四级动态色彩预警**：

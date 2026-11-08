@@ -1,6 +1,6 @@
 {
   "name": "antigravity-cli-hud",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Claude-HUD style multi-line statusline plugin for Google Antigravity CLI (agy).",
   "type": "module",
   "author": "jiangwanyutao",

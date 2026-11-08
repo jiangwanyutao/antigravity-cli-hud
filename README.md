@@ -2,7 +2,7 @@
 
 English | [简体中文](README.zh-CN.md)
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](plugin.json)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](plugin.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
 
@@ -24,8 +24,10 @@ It renders directly below your terminal input box—no `tmux` or separate window
 
 ## ✨ Key Features
 
-- **3-Line `claude-hud` Layout Out of the Box**:
-  - **Row 1 — Model & Context Window**: Active model name (with brand accent colors), subscription plan tier, context window usage percentage + 10-block visual progress bar, and live token counter.
+- **Authentic `jarrodwatts/claude-hud` Terminal Aesthetics**:
+  - **Row 1 — Model, Full Path, Context & Token Speed**: Bracketed brand model `[Gemini 3.8 Flash]`, full workspace path with zsh-style Git branch `git:(main*)`, unified context progress bar `Context [░░░░░░░░░░] 6.2% (65.0k/1.0M)`, and real-time token speed `⚡ 72.0 t/s`.
+  - **Row 2 — Real-Time Quota Pools**: 5-hour rolling quota with inline reset countdown `5h Limit [█████████░] 96% (4h 20m)`, dedicated **Gemini 4 Argon** bar, and weekly quota bar.
+  - **Row 3 — Live Session Tool Activity & Telemetry**: Status indicator `● Idle`, live tool execution stats tailed from transcript `✓ run_command ×8 │ ✓ read_file ×5`, running subagents and background tasks.
   - **Row 2 — Real-Time Quota Pools**: 5-hour rolling quota percentage + progress bar + reset countdown, dedicated **Gemini 4 Argon** quota bar, and 7-day weekly quota bar.
   - **Row 3 — Workspace, Git & Agent Telemetry**: Current project folder, Git branch & uncommitted status, live agent state (`idle` / `thinking` / `working` / `tool_use`), active subagents count, background tasks count, input queue, and pending tool confirmation alerts.
 - **24-Bit Four-Tier Dynamic Color Coding**:

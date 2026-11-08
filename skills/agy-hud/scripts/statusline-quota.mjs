@@ -16,6 +16,7 @@ const BLUE = "\x1b[38;2;87;202;255m";
 const GREEN = "\x1b[38;2;92;219;109m";
 const YELLOW = "\x1b[38;2;255;212;39m";
 const RED = "\x1b[38;2;255;125;175m";
+const CYAN = "\x1b[38;2;120;220;255m";
 
 // Built-in claude-hud style default configuration
 const CLAUDE_HUD_DEFAULT_ITEMS = [
@@ -24,6 +25,7 @@ const CLAUDE_HUD_DEFAULT_ITEMS = [
   'context-used',
   'context-used-bar',
   'token-count',
+  'token-speed',
   'n',
   'quota',
   'quota-bar',
@@ -47,11 +49,21 @@ const CLAUDE_HUD_DEFAULT_ITEM_STYLES = {
   'model-name': 'emoji',
   'plan-tier': 'emoji',
   'token-count': 'emoji',
+  'token-speed': 'emoji',
   'quota-reset-countdown': 'emoji',
   'project-path': 'emoji',
   'git-branch': 'emoji',
   'vcs-dirty': 'emoji'
 };
+
+
+export function getTokenSpeedColor(speed) {
+  if (!speed || speed <= 0) return GRAY;
+  if (speed >= 80) return GREEN;
+  if (speed >= 40) return BLUE;
+  if (speed >= 20) return YELLOW;
+  return RED;
+}
 
 function getColorByPercentage(pct) {
   if (pct >= 75) return BLUE;
@@ -191,7 +203,97 @@ export function normalizeLabelStyle(style) {
   return 'text';
 }
 
-export const EMOJI_MAP = {
+export const LUCIDE_ICON_MAP = {
+  'model-name': '✦',
+  'quota': '↻',
+  'quota-bar': '↻',
+  'quota+bar': '↻',
+  'quota-reset-countdown': '◷',
+  'quota-reset-time': '◷',
+  'quota-weekly': '☵',
+  'quota-weekly-bar': '☵',
+  'quota-weekly+bar': '☵',
+  'quota-weekly-countdown': '◷',
+  'quota-weekly-reset-time': '◷',
+  'quota-argon': '⟡',
+  'quota-argon-bar': '⟡',
+  'quota-argon+bar': '⟡',
+  'quota-argon-countdown': '◷',
+  'quota-argon-reset-time': '◷',
+  'context-used': '◫',
+  'context-used-bar': '◫',
+  'context-used+bar': '◫',
+  'token-count': '◈',
+  'token-count-bar': '◈',
+  'token-count+bar': '◈',
+  'token-speed': '⚡',
+  'plan-tier': '★',
+  'account-email': '✉',
+  'agent-state': '●',
+  'tool-confirmation': '🛡',
+  'pending-input': '↓',
+  'background-tasks': '⚙',
+  'subagents': '⑂',
+  'artifacts': '⊞',
+  'git-branch': '⎇',
+  'vcs-dirty': '●',
+  'vcs-type': '⎇',
+  'project-path': '⌂',
+  'project-full-path': '⌂',
+  'memory-usage': '▦',
+  'sandbox-status': '🛡',
+  'cli-version': '⚑',
+  'conversation-id': '#',
+  'agent-profile': '◆',
+  'mode': '⚙'
+};
+
+export const NERD_ICON_MAP = {
+  'model-name': '󰚩',
+  'quota': '󰁹',
+  'quota-bar': '󰁹',
+  'quota+bar': '󰁹',
+  'quota-reset-countdown': '󰁫',
+  'quota-reset-time': '󰁫',
+  'quota-weekly': '󰃭',
+  'quota-weekly-bar': '󰃭',
+  'quota-weekly+bar': '󰃭',
+  'quota-weekly-countdown': '󰁫',
+  'quota-weekly-reset-time': '󰁫',
+  'quota-argon': '󰛄',
+  'quota-argon-bar': '󰛄',
+  'quota-argon+bar': '󰛄',
+  'quota-argon-countdown': '󰁫',
+  'quota-argon-reset-time': '󰁫',
+  'context-used': '󰍛',
+  'context-used-bar': '󰍛',
+  'context-used+bar': '󰍛',
+  'token-count': '󰓅',
+  'token-count-bar': '󰓅',
+  'token-count+bar': '󰓅',
+  'token-speed': '󱐋',
+  'plan-tier': '󰓥',
+  'account-email': '󰇮',
+  'agent-state': '●',
+  'tool-confirmation': '󰒃',
+  'pending-input': '󰏪',
+  'background-tasks': '󰑮',
+  'subagents': '󰑣',
+  'artifacts': '󰈙',
+  'git-branch': '',
+  'vcs-dirty': '●',
+  'vcs-type': '',
+  'project-path': '󰉋',
+  'project-full-path': '󰉋',
+  'memory-usage': '󰘚',
+  'sandbox-status': '󰒃',
+  'cli-version': '󰅒',
+  'conversation-id': '#',
+  'agent-profile': '󰚩',
+  'mode': '󰒓'
+};
+
+export const CLASSIC_EMOJI_MAP = {
   'model-name': '🤖',
   'quota': '🔋',
   'quota-bar': '🔋',
@@ -214,6 +316,7 @@ export const EMOJI_MAP = {
   'token-count': '💰',
   'token-count-bar': '💰',
   'token-count+bar': '💰',
+  'token-speed': '⚡',
   'plan-tier': '💎',
   'account-email': '📧',
   'agent-state': '⚡',
@@ -234,6 +337,15 @@ export const EMOJI_MAP = {
   'agent-profile': '🪪',
   'mode': '⚙️'
 };
+
+export const EMOJI_MAP = LUCIDE_ICON_MAP;
+
+export function resolveIconMap(theme) {
+  const t = (theme || '').toLowerCase().trim();
+  if (t === 'nerd' || t === 'nerdfont' || t === 'nerd-font') return NERD_ICON_MAP;
+  if (t === 'classic' || t === 'classic-emoji' || t === 'emoji-old') return CLASSIC_EMOJI_MAP;
+  return LUCIDE_ICON_MAP;
+}
 
 const execAsync = promisify(exec);
 
@@ -977,6 +1089,80 @@ async function calculateContextUsageAsync(meta, conversationId) {
   return { totalInput, contextSize, usedPctNum };
 }
 
+export async function getRecentToolsFromTranscriptAsync(transcriptPath) {
+  if (!transcriptPath) return [];
+  try {
+    const raw = await fs.readFile(transcriptPath, 'utf8');
+    const lines = raw.trim().split('\n');
+    const recentLines = lines.slice(-30);
+    const toolCounts = {};
+    for (const line of recentLines) {
+      try {
+        const obj = JSON.parse(line);
+        if (obj.tool_calls && Array.isArray(obj.tool_calls)) {
+          for (const tc of obj.tool_calls) {
+            const name = tc.name || tc.function?.name;
+            if (name) toolCounts[name] = (toolCounts[name] || 0) + 1;
+          }
+        }
+      } catch (_) {}
+    }
+    // Return sorted by most recent / most used
+    return Object.entries(toolCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  } catch (_) {
+    return [];
+  }
+}
+
+export async function calculateTokenSpeedAsync(meta, conversationId) {
+  const speedCachePath = join(os.homedir(), '.gemini', 'tmp', `speed_${conversationId}.json`);
+  let prev = {};
+  try {
+    const raw = await fs.readFile(speedCachePath, 'utf8');
+    prev = JSON.parse(raw.replace(/^\uFEFF/, ''));
+  } catch (_) {}
+
+  const currentApiDuration = Number(meta?.cost?.total_api_duration_ms || 0);
+  const currentTotalOutput = Number(meta?.context_window?.total_output_tokens || 0);
+  const lastOutputTokens = Number(meta?.context_window?.current_usage?.output_tokens || 0);
+  const now = Date.now();
+
+  let speed = (typeof prev?.lastSpeed === 'number' && !isNaN(prev.lastSpeed)) ? prev.lastSpeed : 0;
+  const prevApiDuration = Number(prev?.totalApiDurationMs || 0);
+  const prevTotalOutput = Number(prev?.totalOutputTokens || 0);
+
+  if (currentApiDuration > prevApiDuration) {
+    const deltaMs = currentApiDuration - prevApiDuration;
+    const deltaTokens = (lastOutputTokens > 0) ? lastOutputTokens : (currentTotalOutput - prevTotalOutput);
+    if (deltaTokens > 0 && deltaMs > 50) {
+      speed = (deltaTokens / (deltaMs / 1000));
+    }
+  }
+
+  if (currentApiDuration > 0 || currentTotalOutput > 0) {
+    try {
+      await fs.mkdir(join(os.homedir(), '.gemini', 'tmp'), { recursive: true });
+      await writeFileAndVerifyNoBOM(speedCachePath, JSON.stringify({
+        totalApiDurationMs: currentApiDuration,
+        totalOutputTokens: currentTotalOutput,
+        lastSpeed: speed,
+        updatedAt: now
+      }));
+    } catch (_) {}
+  }
+
+  const speedNum = speed > 0 ? (Math.round(speed * 10) / 10) : 0;
+  let speedVal = '-- t/s';
+  if (speedNum > 0) {
+    speedVal = speedNum >= 100 ? `${Math.round(speedNum)} t/s` : `${speedNum.toFixed(1)} t/s`;
+  }
+
+  return { speedNum, speedVal };
+}
+
+
 export function resolveTerminalWidth(meta, cachedAccount = {}) {
   const rawWidth = typeof meta?.terminal_width === 'number' ? meta.terminal_width : 0;
   if (rawWidth > 80) {
@@ -1058,6 +1244,10 @@ async function getMetricValueAsync(meta, keys, countersCachePath, fallbackFn) {
 export async function extractMetricsAsync(meta, lang, fallbackModel, cache, cachedAccount, quotaInfo, contextInfo, weeklyInfo = { remaining_percentage: 100, refreshes_in: '' }, options = {}) {
   const timeFormat = options?.timeFormat || 'smart';
   const barLength = options?.barLength || 10;
+  const tokenSpeedInfo = options?.tokenSpeedInfo || { speedNum: 0, speedVal: '-- t/s' };
+  const tokenSpeedNum = tokenSpeedInfo.speedNum || 0;
+  const tokenSpeedVal = tokenSpeedInfo.speedVal || '-- t/s';
+  const tokenSpeedColor = getTokenSpeedColor(tokenSpeedNum);
   const normLang = normalizeLanguage(lang);
   const unknownStr = (normLang === 'zh-tw' || normLang === 'zh-cn') ? '未知' : (normLang === 'jp' ? '不明' : 'Unknown');
   const noneStr = normLang === 'zh-tw' ? '無' : (normLang === 'zh-cn' ? '无' : (normLang === 'jp' ? 'なし' : 'N/A'));
@@ -1283,16 +1473,20 @@ export async function extractMetricsAsync(meta, lang, fallbackModel, cache, cach
     sandboxAllowNet, sandboxStatusVal, cliVersion, conversationIdShort, agentProfileName,
     weeklyQuotaColor, weeklyQuotaVal, weeklyCountdownVal, mode,
     quotaResetTimeVal, weeklyResetTimeVal, quotaBarVal, weeklyQuotaBarVal, contextBarVal, tokenBarVal,
-    argonQuotaColor, argonQuotaVal, argonCountdownVal, argonResetTimeVal, argonQuotaBarVal
+    argonQuotaColor, argonQuotaVal, argonCountdownVal, argonResetTimeVal, argonQuotaBarVal,
+    tokenSpeedNum, tokenSpeedVal, tokenSpeedColor,
+    totalInput: contextInfo?.totalInput || 0,
+    contextSize: contextInfo?.contextSize || 1048576
   };
 }
 
-export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefined) {
+export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefined, iconTheme = 'lucide') {
   if (typeof labelStyle === 'object' && labelStyle !== null && !Array.isArray(labelStyle)) {
     itemStyles = labelStyle;
     labelStyle = 'text';
   }
   const normGlobalStyle = normalizeLabelStyle(labelStyle);
+  const activeIconMap = resolveIconMap(iconTheme);
   const normLang = normalizeLanguage(lang);
   const localizedAgentState = formatAgentState(m.agentState, normLang);
   const argonColor = m.argonQuotaColor ?? BLUE;
@@ -1307,6 +1501,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'context-used': `${WHITE}脈絡用量:${RESET} ${m.contextColor}${BOLD}${m.usedPct}${RESET}`,
       'memory-usage': `${WHITE}記憶體:${RESET} ${BLUE}${BOLD}${m.memUsage}${RESET}`,
       'token-count': `${WHITE}權杖數:${RESET} ${m.tokenCount}`,
+      'token-speed': `${WHITE}輸出速度:${RESET} ${m.tokenSpeedColor}${BOLD}${m.tokenSpeedVal}${RESET}`,
       'quota-reset-countdown': `${WHITE}五小時倒數:${RESET} ${BLUE}${BOLD}${m.countdownVal}${RESET}`,
       'quota-reset-time': `${WHITE}五小時重置:${RESET} ${BLUE}${BOLD}${m.quotaResetTimeVal}${RESET}`,
       'quota-bar': `${WHITE}五小時可用:${RESET} ${m.quotaBarVal}`,
@@ -1326,7 +1521,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'quota-weekly+bar': `${WHITE}七日內可用:${RESET} ${m.weeklyQuotaColor}${BOLD}${m.weeklyQuotaVal}${RESET} ${m.weeklyQuotaBarVal}`,
       'token-count+bar': `${WHITE}權杖數:${RESET} ${m.tokenCount} ${m.tokenBarVal}`,
       'git-branch': `${WHITE}分支: ${BOLD}${m.gitBranch}${RESET}`,
-      'project-path': `${WHITE}專案: ${BOLD}${m.projectName}${RESET}`,
+      'project-path': `${WHITE}專案: ${BOLD}${m.projectFullPath || m.projectName}${RESET}`,
       'project-full-path': `${WHITE}完整路徑: ${BOLD}${m.projectFullPath}${RESET}`,
       'plan-tier': `${WHITE}訂閱方案: ${BOLD}${m.planTier}${RESET}`,
       'account-email': `${WHITE}帳號: ${BOLD}${m.accountEmail}${RESET}`,
@@ -1350,6 +1545,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'context-used': `${WHITE}上下文用量:${RESET} ${m.contextColor}${BOLD}${m.usedPct}${RESET}`,
       'memory-usage': `${WHITE}内存:${RESET} ${BLUE}${BOLD}${m.memUsage}${RESET}`,
       'token-count': `${WHITE}令牌数:${RESET} ${m.tokenCount}`,
+      'token-speed': `${WHITE}输出速度:${RESET} ${m.tokenSpeedColor}${BOLD}${m.tokenSpeedVal}${RESET}`,
       'quota-reset-countdown': `${WHITE}五小时倒数:${RESET} ${BLUE}${BOLD}${m.countdownVal}${RESET}`,
       'quota-reset-time': `${WHITE}五小时重置:${RESET} ${BLUE}${BOLD}${m.quotaResetTimeVal}${RESET}`,
       'quota-bar': `${WHITE}五小时可用:${RESET} ${m.quotaBarVal}`,
@@ -1369,7 +1565,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'quota-weekly+bar': `${WHITE}七日内可用:${RESET} ${m.weeklyQuotaColor}${BOLD}${m.weeklyQuotaVal}${RESET} ${m.weeklyQuotaBarVal}`,
       'token-count+bar': `${WHITE}令牌数:${RESET} ${m.tokenCount} ${m.tokenBarVal}`,
       'git-branch': `${WHITE}分支: ${BOLD}${m.gitBranch}${RESET}`,
-      'project-path': `${WHITE}项目: ${BOLD}${m.projectName}${RESET}`,
+      'project-path': `${WHITE}项目: ${BOLD}${m.projectFullPath || m.projectName}${RESET}`,
       'project-full-path': `${WHITE}完整路径: ${BOLD}${m.projectFullPath}${RESET}`,
       'plan-tier': `${WHITE}订阅计划: ${BOLD}${m.planTier}${RESET}`,
       'account-email': `${WHITE}账号: ${BOLD}${m.accountEmail}${RESET}`,
@@ -1393,6 +1589,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'context-used': `${WHITE}Context Used:${RESET} ${m.contextColor}${BOLD}${m.usedPct}${RESET}`,
       'memory-usage': `${WHITE}RAM:${RESET} ${BLUE}${BOLD}${m.memUsage}${RESET}`,
       'token-count': `${WHITE}Tokens:${RESET} ${m.tokenCount}`,
+      'token-speed': `${WHITE}Speed:${RESET} ${m.tokenSpeedColor}${BOLD}${m.tokenSpeedVal}${RESET}`,
       'quota-reset-countdown': `${WHITE}5-hr Reset:${RESET} ${BLUE}${BOLD}${m.countdownVal}${RESET}`,
       'quota-reset-time': `${WHITE}5-hr Reset Time:${RESET} ${BLUE}${BOLD}${m.quotaResetTimeVal}${RESET}`,
       'quota-bar': `${WHITE}5-hr Available:${RESET} ${m.quotaBarVal}`,
@@ -1412,7 +1609,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'quota-weekly+bar': `${WHITE}7-day Available:${RESET} ${m.weeklyQuotaColor}${BOLD}${m.weeklyQuotaVal}${RESET} ${m.weeklyQuotaBarVal}`,
       'token-count+bar': `${WHITE}Tokens:${RESET} ${m.tokenCount} ${m.tokenBarVal}`,
       'git-branch': `${WHITE}Branch: ${BOLD}${m.gitBranch}${RESET}`,
-      'project-path': `${WHITE}Project: ${BOLD}${m.projectName}${RESET}`,
+      'project-path': `${WHITE}Project: ${BOLD}${m.projectFullPath || m.projectName}${RESET}`,
       'project-full-path': `${WHITE}Project Path: ${BOLD}${m.projectFullPath}${RESET}`,
       'plan-tier': `${WHITE}Plan: ${BOLD}${m.planTier}${RESET}`,
       'account-email': `${WHITE}Account: ${BOLD}${m.accountEmail}${RESET}`,
@@ -1436,6 +1633,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'context-used': `${WHITE}コンテキスト使用:${RESET} ${m.contextColor}${BOLD}${m.usedPct}${RESET}`,
       'memory-usage': `${WHITE}メモリ:${RESET} ${BLUE}${BOLD}${m.memUsage}${RESET}`,
       'token-count': `${WHITE}トークン:${RESET} ${m.tokenCount}`,
+      'token-speed': `${WHITE}出力速度:${RESET} ${m.tokenSpeedColor}${BOLD}${m.tokenSpeedVal}${RESET}`,
       'quota-reset-countdown': `${WHITE}五時間リセット:${RESET} ${BLUE}${BOLD}${m.countdownVal}${RESET}`,
       'quota-reset-time': `${WHITE}五時間リセット時刻:${RESET} ${BLUE}${BOLD}${m.quotaResetTimeVal}${RESET}`,
       'quota-bar': `${WHITE}五時間残量:${RESET} ${m.quotaBarVal}`,
@@ -1455,7 +1653,7 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
       'quota-weekly+bar': `${WHITE}七日間残量:${RESET} ${m.weeklyQuotaColor}${BOLD}${m.weeklyQuotaVal}${RESET} ${m.weeklyQuotaBarVal}`,
       'token-count+bar': `${WHITE}トークン:${RESET} ${m.tokenCount} ${m.tokenBarVal}`,
       'git-branch': `${WHITE}ブランチ: ${BOLD}${m.gitBranch}${RESET}`,
-      'project-path': `${WHITE}プロジェクト: ${BOLD}${m.projectName}${RESET}`,
+      'project-path': `${WHITE}プロジェクト: ${BOLD}${m.projectFullPath || m.projectName}${RESET}`,
       'project-full-path': `${WHITE}パス: ${BOLD}${m.projectFullPath}${RESET}`,
       'plan-tier': `${WHITE}プラン: ${BOLD}${m.planTier}${RESET}`,
       'account-email': `${WHITE}アカウント: ${BOLD}${m.accountEmail}${RESET}`,
@@ -1478,11 +1676,19 @@ export function buildI18nDict(lang, m, labelStyle = 'text', itemStyles = undefin
 
   const emojiDict = {};
   for (const [key, val] of Object.entries(baseDict)) {
-    const emoji = EMOJI_MAP[key];
+    const emoji = activeIconMap[key];
     if (emoji && val.startsWith(WHITE)) {
       const afterWhite = val.slice(WHITE.length);
       const colonIdx = afterWhite.indexOf(':');
       if (colonIdx !== -1) {
+        if (key === 'vcs-dirty') {
+          emojiDict[key] = `${getVcsDirtyColor(m.vcsDirtyFlag)}${emoji}${RESET} ${getVcsDirtyColor(m.vcsDirtyFlag)}${BOLD}${m.vcsDirtyLabel}${RESET}`;
+          continue;
+        }
+        if (key === 'agent-state') {
+          emojiDict[key] = `${getAgentStateColor(m.agentState)}${emoji}${RESET} ${getAgentStateColor(m.agentState)}${BOLD}${formatAgentState(m.agentState, normLang)}${RESET}`;
+          continue;
+        }
         emojiDict[key] = `${WHITE}${emoji}${afterWhite.slice(colonIdx + 1)}`;
         continue;
       }
@@ -1578,6 +1784,84 @@ export function preprocessAdjacentItems(items, itemStyles = undefined, defaultSt
   return result;
 }
 
+
+export function formatModelBracket(modelName) {
+  const color = getModelColor(modelName) || WHITE;
+  return `${color}${BOLD}[${modelName}]${RESET}`;
+}
+
+export function formatGitZsh(projectName, branch, isDirty) {
+  if (!branch || branch === '无版本控制' || branch === 'No VC' || branch === 'バージョン管理なし') {
+    return `${WHITE}${BOLD}${projectName}${RESET} ${GRAY}(no git)${RESET}`;
+  }
+  const dirtyAsterisk = isDirty ? `${YELLOW}*${RESET}` : '';
+  const branchColor = isDirty ? YELLOW : GREEN;
+  return `${WHITE}${BOLD}${projectName}${RESET} ${branchColor}git:(${branch}${dirtyAsterisk})${RESET}`;
+}
+
+export function renderClaudeHudLayout(m, recentTools = [], termWidth = 80, normLang = 'zh-cn') {
+  const lines = [];
+
+  // Line 1: [Model] │ project git:(branch*) │ Context [░░░░░░░░░░] 1.4% (15.0k/1.0M) │ ⚡ 80.0 t/s
+  const modelPart = formatModelBracket(m.fallbackModel);
+  const displayPath = m.projectFullPath || m.projectName;
+  const gitPart = formatGitZsh(displayPath, m.gitBranch, m.vcsDirtyFlag);
+  const totalInFmt = formatTokens(m.totalInput);
+  const ctxSizeFmt = formatTokens(m.contextSize);
+  const contextPart = `${WHITE}Context${RESET} ${m.contextBarVal} ${m.contextColor}${m.usedPct}${RESET} ${GRAY}(${totalInFmt}/${ctxSizeFmt})${RESET}`;
+  const speedPart = `${WHITE}⚡${RESET} ${m.tokenSpeedColor}${BOLD}${m.tokenSpeedVal}${RESET}`;
+
+  const l1Parts = [modelPart, gitPart, contextPart, speedPart];
+  lines.push(l1Parts.join(` ${GRAY}│${RESET} `));
+
+  // Line 2: 5h Limit [█████████░] 98% (4h 43m) │ Argon [███████░░░] 79% (5d 17h) │ Weekly [████████░░] 85%
+  const l2Parts = [];
+  const limit5hLabel = (normLang === 'zh-cn' || normLang === 'zh-tw') ? '5h可用' : '5h Limit';
+  const argonLabel = (normLang === 'zh-cn' || normLang === 'zh-tw') ? 'Argon' : 'Argon';
+  const weeklyLabel = (normLang === 'zh-cn' || normLang === 'zh-tw') ? '七日可用' : 'Weekly';
+
+  const limit5hPart = `${WHITE}${limit5hLabel}${RESET} ${m.quotaBarVal} ${m.quotaColor}${m.quotaVal}${RESET}` + (m.countdownVal && m.countdownVal !== '无' && m.countdownVal !== 'N/A' ? ` ${GRAY}(${m.countdownVal})${RESET}` : '');
+  l2Parts.push(limit5hPart);
+
+  if (m.argonQuotaVal && m.argonQuotaVal !== '0%') {
+    const argonPart = `${WHITE}${argonLabel}${RESET} ${m.argonQuotaBarVal} ${m.argonQuotaColor}${m.argonQuotaVal}${RESET}` + (m.argonCountdownVal && m.argonCountdownVal !== '无' && m.argonCountdownVal !== 'N/A' ? ` ${GRAY}(${m.argonCountdownVal})${RESET}` : '');
+    l2Parts.push(argonPart);
+  }
+
+  const weeklyPart = `${WHITE}${weeklyLabel}${RESET} ${m.weeklyQuotaBarVal} ${m.weeklyQuotaColor}${m.weeklyQuotaVal}${RESET}` + (m.weeklyCountdownVal && m.weeklyCountdownVal !== '无' && m.weeklyCountdownVal !== 'N/A' ? ` ${GRAY}(${m.weeklyCountdownVal})${RESET}` : '');
+  l2Parts.push(weeklyPart);
+
+  lines.push(l2Parts.join(` ${GRAY}│${RESET} `));
+
+  // Line 3: Activity, Tools & Agents
+  // e.g. ● 闲置 │ ✓ run_command ×7 │ ✓ search_web ×4 │ ⑂ 0 │ ⚙ 0
+  const l3Parts = [];
+  const stateColor = getAgentStateColor(m.agentState);
+  const stateText = formatAgentState(m.agentState, normLang);
+  l3Parts.push(`${stateColor}● ${stateText}${RESET}`);
+
+  if (Array.isArray(recentTools) && recentTools.length > 0) {
+    const toolsShown = recentTools.slice(0, 4);
+    for (const t of toolsShown) {
+      l3Parts.push(`${CYAN}✓ ${t.name}${t.count > 1 ? ` ${GRAY}×${t.count}${RESET}` : ''}${RESET}`);
+    }
+  }
+
+  l3Parts.push(`${WHITE}⑂${RESET} ${getColorByCount(m.subagentsCount)}${m.subagentsCount}${RESET}`);
+  l3Parts.push(`${WHITE}⚙${RESET} ${getColorByCount(m.backgroundTasksCount)}${m.backgroundTasksCount}${RESET}`);
+  if (m.pendingInputCount > 0) {
+    l3Parts.push(`${WHITE}✉${RESET} ${getColorByCount(m.pendingInputCount)}${m.pendingInputCount}${RESET}`);
+  }
+  if (m.toolConfirmPending) {
+    l3Parts.push(`${YELLOW}🛡 待确认${RESET}`);
+  }
+
+  lines.push(l3Parts.join(` ${GRAY}│${RESET} `));
+
+  console.log(lines.join('\n'));
+  return lines;
+}
+
 export function renderStatusLine(footerItems, activeDict, termWidth, fallbackModel, itemStyles = undefined, defaultStyle = 'text') {
   const lines = [];
   let currentLine = '';
@@ -1650,6 +1934,8 @@ async function main() {
     let conversationId = 'default';
     if (typeof meta?.conversation_id === 'string' && meta.conversation_id) {
       conversationId = meta.conversation_id.replace(/\.\./g, '').replace(/\//g, '').replace(/\\/g, '');
+    } else if (typeof meta?.session_id === 'string' && meta.session_id) {
+      conversationId = meta.session_id.replace(/\.\./g, '').replace(/\//g, '').replace(/\\/g, '');
     }
     
     const cachePath = join(os.homedir(), '.gemini', 'tmp', 'real_quota_cache.json');
@@ -1762,16 +2048,27 @@ async function main() {
     const quotaInfo = resolveModelQuota(fallbackModel, cache);
     const weeklyInfo = resolveWeeklyQuota(fallbackModel, cache);
     const argonInfo = resolveArgonQuota(cache);
-    const contextInfo = await calculateContextUsageAsync(meta, conversationId);
+    const [contextInfo, tokenSpeedInfo, recentTools] = await Promise.all([
+      calculateContextUsageAsync(meta, conversationId),
+      calculateTokenSpeedAsync(meta, conversationId),
+      getRecentToolsFromTranscriptAsync(meta?.transcript_path)
+    ]);
 
     const timeFormat = settings?.ui?.footer?.timeFormat || settings?.ui?.timeFormat || 'smart';
     const barLength = settings?.ui?.footer?.barLength || settings?.ui?.barLength || 10;
     const labelStyle = normalizeLabelStyle(settings?.ui?.footer?.labelStyle || settings?.ui?.footer?.style || settings?.ui?.labelStyle || 'text');
     const rawItemStyles = hasCustomItems ? settings?.ui?.footer?.itemStyles : CLAUDE_HUD_DEFAULT_ITEM_STYLES;
 
-    const metrics = await extractMetricsAsync(meta, lang, fallbackModel, cache, cachedAccount, quotaInfo, contextInfo, weeklyInfo, { timeFormat, barLength, argonInfo });
-    const activeDict = buildI18nDict(lang, metrics, labelStyle, rawItemStyles);
-    renderStatusLine(footerItems, activeDict, termWidth, fallbackModel, rawItemStyles, labelStyle);
+    const iconTheme = settings?.ui?.footer?.iconTheme || settings?.ui?.iconTheme || 'lucide';
+    const metrics = await extractMetricsAsync(meta, lang, fallbackModel, cache, cachedAccount, quotaInfo, contextInfo, weeklyInfo, { timeFormat, barLength, argonInfo, tokenSpeedInfo });
+    const activeDict = buildI18nDict(lang, metrics, labelStyle, rawItemStyles, iconTheme);
+
+    const layoutMode = settings?.ui?.footer?.layout || 'claude-hud';
+    if (layoutMode === 'claude-hud' && !hasCustomItems) {
+      renderClaudeHudLayout(metrics, recentTools, termWidth, lang);
+    } else {
+      renderStatusLine(footerItems, activeDict, termWidth, fallbackModel, rawItemStyles, labelStyle);
+    }
 
   } catch (err) {
     try {

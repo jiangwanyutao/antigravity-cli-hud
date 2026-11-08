@@ -27,12 +27,12 @@ const cmd = process.argv[3];
 const footer = {
   labelStyle: 'text',
   items: [
-    'model-name', 'plan-tier', 'context-used', 'context-used-bar', 'token-count', 'n',
+    'model-name', 'plan-tier', 'context-used', 'context-used-bar', 'token-count', 'token-speed', 'n',
     'quota', 'quota-bar', 'quota-reset-countdown', 'quota-argon', 'quota-argon-bar', 'quota-weekly', 'quota-weekly-bar', 'n',
     'project-path', 'git-branch', 'vcs-dirty', 'agent-state', 'subagents', 'background-tasks', 'pending-input', 'tool-confirmation'
   ],
   itemStyles: {
-    'model-name': 'emoji', 'plan-tier': 'emoji', 'token-count': 'emoji',
+    'model-name': 'emoji', 'plan-tier': 'emoji', 'token-count': 'emoji', 'token-speed': 'emoji',
     'quota-reset-countdown': 'emoji', 'project-path': 'emoji', 'git-branch': 'emoji', 'vcs-dirty': 'emoji'
   }
 };
