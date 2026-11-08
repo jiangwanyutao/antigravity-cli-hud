@@ -6,13 +6,19 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
 
-一款复刻 **[claude-hud](https://github.com/jarrodwatts/claude-hud)** 视觉风格的 **Google Antigravity CLI (`agy`)**、**Antigravity IDE** 与 **Antigravity 2.0 桌面端**多行状态栏（HUD）插件。
+深度参考并对齐 **[jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud)** 终端美学与功能架构的 **Google Antigravity CLI (`agy`)**、**Antigravity IDE** 与 **Antigravity 2.0 桌面端**多行状态栏（HUD）插件。
 
-它直接渲染在终端输入框正下方（无需 `tmux` 或额外分屏），以**零额外 Token 消耗**实时展示当前 AI 模型、上下文窗口（Context Window）进度条、5 小时 / 每周 / Gemini 4 Argon 专属配额进度条、Git 分支状态，以及正在运行的子代理与后台任务状态。
+它直接渲染在终端输入框正下方（无需 `tmux` 或额外分屏），以**零额外 Token 消耗**实时展示当前模型、工作区完整路径、Zsh 风格 Git 分支、上下文窗口占用、实时 Token 输出测速、5 小时/每周/Argon 配额池倒计时，以及会话日志实时工具调用追踪。
 
 ---
 
-## 📸 界面截图
+## 📸 界面效果
+
+```text
+[Gemini 3.8 Flash] │ D:\project git:(main*) │ Context [░░░░░░░░░░] 6.2% (65.0k/1.0M) │ ⚡ 72.0 t/s
+5h可用 [█████████░] 96% (4h 20m) │ Argon [███████░░░] 79% (5d 17h) │ 七日可用 [████████░░] 85% (5d 17h)
+● 闲置 │ ✓ run_command ×8 │ ✓ read_file ×5 │ ✓ write_file ×2 │ ⑂ 0 │ ⚙ 0
+```
 
 ### 简体中文 (`zh-cn`)
 ![antigravity-cli-hud 中文预览](docs/images/agy-hud-zh.svg)
@@ -25,18 +31,19 @@
 ## ✨ 核心特性
 
 - **原生深度复刻 `jarrodwatts/claude-hud` 终端美学**：
-  - **第 1 行 — 模型、完整路径、上下文与输出速率**：中括号专属品牌模型 `[Gemini 3.8 Flash]`、工作区完整路径与 Zsh 风格 Git 分支 `git:(main*)`、一体化上下文进度条 `Context [░░░░░░░░░░] 6.2% (65.0k/1.0M)`、实时 Token 生成速度 `⚡ 72.0 t/s`。
-  - **第 2 行 — 多维实时配额池与倒计时**：5 小时滚动配额 `5h可用 [█████████░] 96% (4h 20m)`、**Gemini 4 Argon** 专属配额进度条、7 日周配额进度条。
-  - **第 3 行 — 会话工具动态追踪与代理状态**：状态指示灯 `● 闲置`、实时解析 Tail 会话日志的工具调用频次 `✓ run_command ×8 │ ✓ read_file ×5`、子代理与后台任务计数。
-  - **第 2 行 — 多维实时配额池**：5 小时滚动配额百分比 + 进度条 + 重置倒计时、**Gemini 4 Argon** 专属配额进度条、7 日周配额进度条。
-  - **第 3 行 — 工作区、Git 与代理状态**：当前项目目录名、Git 分支与未提交变更状态、Agent 实时状态（闲置 / 思考中 / 执行中 / 调用工具）、活跃子代理数、后台任务数、输入队列与工具待确认提醒。
+  - **第 1 行 — 模型、完整绝对路径、上下文与输出速率**：中括号专属品牌高亮模型 `[Gemini 3.8 Flash]`、工作区绝对完整路径与 Zsh 风格 Git 分支 `D:\project git:(main*)`（Clean 绿 / Dirty 黄带星号）、一体化上下文进度条与绝对计数 `Context [░░░░░░░░░░] 6.2% (65.0k/1.0M)`、实时 Token 流式生成速率 `⚡ 72.0 t/s`。
+  - **第 2 行 — 多维实时配额池与内联倒计时**：5 小时滚动配额 `5h可用 [█████████░] 96% (4h 20m)`、**Gemini 4 Argon** 专属配额进度条、7 日周配额进度条。
+  - **第 3 行 — 会话工具动态追踪与代理状态**：状态指示灯 `● 闲置`、实时 Tail 会话 `transcript.jsonl` 的工具调用频次 `✓ run_command ×8 │ ✓ read_file ×5`、子代理与后台任务计数。
+- **现代化组件库图标体系（告别粗糙 AI Emoji）**：
+  - 默认采用类似 **Lucide Icons** 与现代终端工具的极简符号（`✦`、`★`、`◈`、`⚡`、`◷`、`⎇`、`●`、`⑂`、`⚙`）。
+  - 支持通过配置一键切换到 **Nerd Fonts** 原生字符（如 ``、`󰚩`、`󰍛`、`󱐋` 等）。
 - **24-Bit 四级动态色彩预警**：
   - `100% – 75%`：蓝色 (`#57caff`)
   - `74% – 50%`：绿色 (`#5cdb6d`)
   - `49% – 25%`：黄色 (`#ffd427`)
   - `24% – 0%`：粉红/红色 (`#ff7daf`)
-- **零 Token 消耗**：后台直接连接本地 Antigravity Language Server RPC 接口获取实时配额，并具备智能磁盘缓存。
-- **多语言切换**：支持简体中文 (`zh-cn`)、英文 (`us`)、繁体中文 (`zh-tw`) 与日文 (`jp`)，支持配置热更新（Hot Reload）。
+- **零额外 Token 消耗**：后台直接连接本地 Antigravity Language Server RPC 接口获取实时配额，并具备智能磁盘缓存。
+- **多语言切换与热重载**：支持简体中文 (`zh-cn`)、英文 (`us`)、繁体中文 (`zh-tw`) 与日文 (`jp`)，修改 `settings.json` 后无需重启 CLI 即可热更新生效。
 - **跨平台兼容**：纯 Node.js (`.mjs`) 实现，原生支持 Windows、macOS 和 Linux。
 
 ---
@@ -77,65 +84,39 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ## ⚙️ 自定义配置
 
-你可以在 `~/.gemini/antigravity-cli/settings.json`（或项目工作区的 `.gemini/settings.json`）中自由调整语言、进度条长度、文字/Emoji 样式以及换行排版：
+你可以在 `~/.gemini/antigravity-cli/settings.json`（或项目工作区的 `.gemini/settings.json`）中配置 HUD 参数：
 
 ```json
 {
   "ui": {
     "language": "zh-cn",
     "footer": {
-      "labelStyle": "text",
-      "barLength": 10,
-      "items": [
-        "model-name",
-        "plan-tier",
-        "context-used",
-        "context-used-bar",
-        "token-count",
-        "n",
-        "quota",
-        "quota-bar",
-        "quota-reset-countdown",
-        "quota-argon",
-        "quota-argon-bar",
-        "quota-weekly",
-        "quota-weekly-bar",
-        "n",
-        "project-path",
-        "git-branch",
-        "vcs-dirty",
-        "agent-state",
-        "subagents",
-        "background-tasks",
-        "pending-input",
-        "tool-confirmation"
-      ],
-      "itemStyles": {
-        "model-name": "emoji",
-        "plan-tier": "emoji",
-        "token-count": "emoji",
-        "quota-reset-countdown": "emoji",
-        "project-path": "emoji",
-        "git-branch": "emoji",
-        "vcs-dirty": "emoji"
-      }
+      "layout": "claude-hud",
+      "iconTheme": "lucide",
+      "barLength": 10
     }
   }
 }
 ```
 
-- 将 `"language"` 设为 `"zh-cn"`（简体中文）、`"us"`（英文）、`"zh-tw"`（繁体中文）或 `"jp"`（日文）即可实时切换语言。
-- 在 `"items"` 数组中插入 `"n"` 代表强制换行。
+### 配置项说明：
+
+| 配置项 | 类型 | 默认值 | 可选值 / 说明 |
+| :--- | :--- | :--- | :--- |
+| `ui.language` | string | `"zh-cn"` | `"zh-cn"`（简体）、`"us"`（英文）、`"zh-tw"`（繁体）、`"jp"`（日文） |
+| `ui.footer.layout` | string | `"claude-hud"` | `"claude-hud"`（原生3行极简HUD）或 `"modular"`（旧版自定义条目拼装） |
+| `ui.footer.iconTheme` | string | `"lucide"` | `"lucide"`（极简符号）、`"nerd"`（Nerd Fonts字符）、`"classic-emoji"` |
+| `ui.footer.barLength` | number | `10` | 进度条块数（1 ~ 30） |
 
 ---
 
 ## 🙏 致谢
 
-- 视觉排版灵感源自 [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud)。
-- 核心配额采集与状态栏渲染引擎基于 [AndyAWD/antigravity-cli-statusline](https://github.com/AndyAWD/antigravity-cli-statusline)（MIT 协议）构建。
+- 视觉排版与工具追踪灵感源自 [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud)。
+- 核心配额采集与状态栏挂钩机制基于 [AndyAWD/antigravity-cli-statusline](https://github.com/AndyAWD/antigravity-cli-statusline)（MIT 协议）构建。
 
 ---
 
 ## 📄 开源协议
 
-本项目基于 [MIT License](LICENSE) 开源。
+本项目基于 [MIT](LICENSE) 协议开源。

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 280" width="980" height="280">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 280" width="1020" height="280">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#1a1b26"/>
@@ -10,84 +10,76 @@
   </defs>
 
   <!-- Window Frame -->
-  <rect x="10" y="10" width="960" height="260" rx="12" fill="url(#bg)" stroke="#2f334d" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="10" y="10" width="1000" height="260" rx="12" fill="url(#bg)" stroke="#2f334d" stroke-width="1.5" filter="url(#shadow)"/>
 
   <!-- Title Bar -->
-  <path d="M 10 22 Q 10 10 22 10 L 958 10 Q 970 10 970 22 L 970 44 L 10 44 Z" fill="#1f2335"/>
-  <line x1="10" y1="44" x2="970" y2="44" stroke="#2f334d" stroke-width="1"/>
+  <path d="M 10 22 Q 10 10 22 10 L 998 10 Q 1010 10 1010 22 L 1010 44 L 10 44 Z" fill="#1f2335"/>
+  <line x1="10" y1="44" x2="1010" y2="44" stroke="#2f334d" stroke-width="1"/>
   <circle cx="32" cy="27" r="6" fill="#ff5f56"/>
   <circle cx="52" cy="27" r="6" fill="#ffbd2e"/>
   <circle cx="72" cy="27" r="6" fill="#27c93f"/>
-  <text x="490" y="32" fill="#7aa2f7" font-family="Consolas, 'Microsoft YaHei', monospace" font-size="13" text-anchor="middle" font-weight="bold">agy — Google Antigravity CLI (agy-hud 中文状态栏)</text>
+  <text x="510" y="32" fill="#7aa2f7" font-family="Consolas, 'Cascadia Code', monospace" font-size="13" text-anchor="middle" font-weight="bold">agy — Google Antigravity CLI (claude-hud 原生风格状态栏)</text>
 
   <!-- Prompt Input Box -->
-  <rect x="28" y="60" width="924" height="44" rx="6" fill="#16161e" stroke="#3b4261" stroke-width="1"/>
+  <rect x="28" y="60" width="964" height="44" rx="6" fill="#16161e" stroke="#3b4261" stroke-width="1"/>
   <text x="44" y="87" fill="#7dcfff" font-family="Consolas, 'Microsoft YaHei', monospace" font-size="15" font-weight="bold">&gt;</text>
-  <text x="64" y="87" fill="#c0caf5" font-family="Consolas, 'Microsoft YaHei', monospace" font-size="14">重构鉴权中间件并运行单元测试</text>
-  <rect x="272" y="73" width="8" height="18" fill="#7aa2f7" opacity="0.85"/>
+  <text x="64" y="87" fill="#c0caf5" font-family="Consolas, 'Microsoft YaHei', monospace" font-size="14">优化 HUD 布局并对齐 claude-hud 终端美学</text>
+  <rect x="368" y="73" width="8" height="18" fill="#7aa2f7" opacity="0.85"/>
 
   <!-- Divider -->
-  <line x1="28" y1="120" x2="952" y2="120" stroke="#292e42" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="28" y1="120" x2="992" y2="120" stroke="#292e42" stroke-width="1" stroke-dasharray="4 4"/>
 
-  <!-- HUD Line 1: Model, Plan, Context & Tokens -->
-  <text x="32" y="152" font-family="Consolas, 'Microsoft YaHei', 'Segoe UI Emoji', monospace" font-size="14">
-    <tspan fill="#ffffff">🤖 </tspan>
-    <tspan fill="#4796e3" font-weight="bold">Gemini 4 Argon (Medium)</tspan>
+  <!-- HUD Line 1: Model, Full Path & Git, Context Bar, Token Speed -->
+  <text x="32" y="152" font-family="Consolas, 'Cascadia Code', 'Microsoft YaHei', monospace" font-size="14">
+    <tspan fill="#4796e3" font-weight="bold">[Gemini 3.8 Flash]</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">💎 </tspan>
-    <tspan fill="#ffffff" font-weight="bold">Google AI Pro</tspan>
+    <tspan fill="#ffffff" font-weight="bold">D:project</tspan>
+    <tspan fill="#ffd427"> git:(main*)</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">上下文用量: </tspan>
-    <tspan fill="#57caff" font-weight="bold">18.5%</tspan>
-    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">██</tspan><tspan fill="#565f89">░░░░░░░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#ffffff">Context</tspan>
+    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">█</tspan><tspan fill="#565f89">░░░░░░░░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#57caff"> 6.2%</tspan>
+    <tspan fill="#565f89"> (65.0k/1.0M)</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">💰 </tspan>
-    <tspan fill="#57caff">185.0k</tspan>
-    <tspan fill="#c0caf5"> / 1.0M</tspan>
+    <tspan fill="#ffffff">⚡ </tspan>
+    <tspan fill="#5cdb6d" font-weight="bold">72.0 t/s</tspan>
   </text>
 
-  <!-- HUD Line 2: 5-hr Quota, Reset, Argon Quota, Weekly Quota -->
-  <text x="32" y="188" font-family="Consolas, 'Microsoft YaHei', 'Segoe UI Emoji', monospace" font-size="14">
-    <tspan fill="#ffffff">五小时可用: </tspan>
-    <tspan fill="#57caff" font-weight="bold">88%</tspan>
+  <!-- HUD Line 2: 5-hr Quota with inline countdown, Argon Quota, Weekly Quota -->
+  <text x="32" y="188" font-family="Consolas, 'Cascadia Code', 'Microsoft YaHei', monospace" font-size="14">
+    <tspan fill="#ffffff">5h可用</tspan>
+    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">█████████</tspan><tspan fill="#565f89">░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#57caff" font-weight="bold"> 96%</tspan>
+    <tspan fill="#565f89"> (4h 20m)</tspan>
+    <tspan fill="#565f89"> │ </tspan>
+    <tspan fill="#ffffff">Argon</tspan>
     <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">████████</tspan><tspan fill="#565f89">░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#57caff" font-weight="bold"> 79%</tspan>
+    <tspan fill="#565f89"> (5d 17h)</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">⏳ </tspan>
-    <tspan fill="#57caff" font-weight="bold">4h 50m</tspan>
-    <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">Argon 可用: </tspan>
-    <tspan fill="#5cdb6d" font-weight="bold">62%</tspan>
-    <tspan fill="#ffffff"> [</tspan><tspan fill="#5cdb6d">██████</tspan><tspan fill="#565f89">░░░░</tspan><tspan fill="#ffffff">]</tspan>
-    <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">七日内可用: </tspan>
-    <tspan fill="#57caff" font-weight="bold">78%</tspan>
-    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">███████</tspan><tspan fill="#565f89">░░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#ffffff">七日可用</tspan>
+    <tspan fill="#ffffff"> [</tspan><tspan fill="#57caff">████████</tspan><tspan fill="#565f89">░░</tspan><tspan fill="#ffffff">]</tspan>
+    <tspan fill="#57caff" font-weight="bold"> 85%</tspan>
+    <tspan fill="#565f89"> (5d 17h)</tspan>
   </text>
 
-  <!-- HUD Line 3: Workspace, Git, Agent State, Subagents, BG Tasks -->
-  <text x="32" y="224" font-family="Consolas, 'Microsoft YaHei', 'Segoe UI Emoji', monospace" font-size="14">
-    <tspan fill="#ffffff">📁 </tspan>
-    <tspan fill="#ffffff" font-weight="bold">aiplatform</tspan>
+  <!-- HUD Line 3: Agent State, Live Tool Tracking from Transcript, Subagents, BG Tasks -->
+  <text x="32" y="224" font-family="Consolas, 'Cascadia Code', 'Microsoft YaHei', monospace" font-size="14">
+    <tspan fill="#5cdb6d">● 闲置</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">🔀 </tspan>
-    <tspan fill="#ffffff" font-weight="bold">main</tspan>
+    <tspan fill="#78dcff">✓ run_command</tspan>
+    <tspan fill="#565f89"> ×8</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">🔍 </tspan>
-    <tspan fill="#5cdb6d" font-weight="bold">无变更</tspan>
+    <tspan fill="#78dcff">✓ read_file</tspan>
+    <tspan fill="#565f89"> ×5</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">代理状态: </tspan>
-    <tspan fill="#ffd427" font-weight="bold">思考中</tspan>
+    <tspan fill="#78dcff">✓ write_file</tspan>
+    <tspan fill="#565f89"> ×2</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">子代理: </tspan>
-    <tspan fill="#5cdb6d" font-weight="bold">2</tspan>
-    <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">后台任务: </tspan>
+    <tspan fill="#ffffff">⑂ </tspan>
     <tspan fill="#57caff" font-weight="bold">0</tspan>
     <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">待处理输入: </tspan>
+    <tspan fill="#ffffff">⚙ </tspan>
     <tspan fill="#57caff" font-weight="bold">0</tspan>
-    <tspan fill="#565f89"> │ </tspan>
-    <tspan fill="#ffffff">工具待确认: </tspan>
-    <tspan fill="#5cdb6d" font-weight="bold">无</tspan>
   </text>
 </svg>
